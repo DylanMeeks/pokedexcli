@@ -13,15 +13,20 @@ type cliCommand struct {
 	callback    func() error
 }
 
-func main() {
+var registry map[string]cliCommand = map[string]cliCommand{
+    "exit": {
+        name:        "exit",
+        description: "Exit the Pokedex",
+        callback:    commandExit,
+    },
+    "help": {
+        name:        "help",
+        description: "Displays a help message",
+        callback:    commandHelp,
+    },
+}
 
-	commands := map[string]cliCommand{
-		"exit": {
-			name:        "exit",
-			description: "Exit the Pokedex",
-			callback:    commandExit,
-		},
-	}
+func main() {
 
 	sc := bufio.NewScanner(os.Stdin)
 
@@ -32,7 +37,7 @@ func main() {
 		input = strings.ToLower(input)
 		words := strings.Fields(input)
         
-        if command, exists := commands[words[0]]; exists {
+        if command, exists := registry[words[0]]; exists {
             command.callback()
         } else {
             fmt.Println("Unknown command")
@@ -49,4 +54,14 @@ func commandExit() error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
+}
+
+func commandHelp() error {
+    fmt.Println(
+`Welcome to the Pokedex!
+Usage:
+
+help: Displays a help message
+exit: Exit the Pokedex`)
+    return nil
 }
