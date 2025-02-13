@@ -11,24 +11,35 @@ type locationArea struct {
 	Name                 string `json:"name"`
 }
 
-func GetLocationArea(id string) ([]string, error) {
-    res, err := http.Get("https://pokeapi.co/api/v2/location-area/" + id)
+type locationReqRes struct {
+	Count    int    `json:"count"`
+	Next     string `json:"next"`
+	Previous any    `json:"previous"`
+	Results  []struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"results"`
+}
+
+
+func GetLocations(url string) (locationReqRes, error) {
+    res, err := http.Get(url)
     if err != nil {
-        return []string{}, err
+        return locationReqRes{}, err
     }
 
     body, err := io.ReadAll(res.Body)
     if err != nil {
-        return []string{}, err
+        return locationReqRes{}, err
     }
     defer res.Body.Close()
 
-    locData := locationArea{}
+    locData := locationReqRes{}
     err = json.Unmarshal(body, &locData)
     if err != nil {
-        return []string{}, err
+        return locationReqRes{}, err
     }
 
-    return []string{locData.Name}, nil
+    return locData, nil
 
 }
