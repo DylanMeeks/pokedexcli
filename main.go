@@ -32,14 +32,24 @@ var registry map[string]cliCommand = map[string]cliCommand{
 	},
 	"map": {
 		name:        "map",
-		description: "Displays the names of 20 location areas",
+		description: "Displays the names of next 20 location areas",
 		callback:    commandMap,
+	},
+	"mapb": {
+		name:        "mapb",
+		description: "Displays the names of the previous 20 location areas",
+		callback:    commandMapb,
 	},
 }
 
 func main() {
 
 	sc := bufio.NewScanner(os.Stdin)
+
+    config := commandConfig{
+        Next: "https://pokeapi.co/api/v2/location-area/",
+        Previous: "",
+    }
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -49,7 +59,10 @@ func main() {
 		words := strings.Fields(input)
 
 		if command, exists := registry[words[0]]; exists {
-			command.callback(new(commandConfig))
+            if err := command.callback(&config); err != nil {
+                fmt.Println(err)
+            }
+
 		} else {
 			fmt.Println("Unknown command")
 		}
@@ -78,5 +91,31 @@ exit: Exit the Pokedex`)
 }
 
 func commandMap(config *commandConfig) error {
-    GetLocationArea
+    locs, err := pokeapi.GetLocations(config.Next) 
+    if err != nil {
+        return err
+    }
+    for _, loc := range locs.Results {
+        fmt.Println(loc.Name)
+    }
+    config.Previous = config.Next
+    config.Next = locs.Next
+    fmt.Println("next: " + config.Next)
+    fmt.Println("previous: " + config.Previous)
+    return nil
+}
+
+func commandMapb(config *commandConfig) error {
+    locs, err := pokeapi.GetLocations(config.Previous) 
+    if err != nil {
+        return err
+    }
+    for _, loc := range locs.Results {
+        fmt.Println(loc.Name)
+    }
+    config.Next = config.Previous
+    config.Previous = locs.Previous
+    fmt.Println("next: " + config.Next)
+    fmt.Println("previous: " + config.Previous)
+    return nil
 }

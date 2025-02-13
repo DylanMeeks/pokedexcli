@@ -6,15 +6,15 @@ import (
 	"net/http"
 )
 
-type locationArea struct {
+type LocationArea struct {
 	ID                   int    `json:"id"`
 	Name                 string `json:"name"`
 }
 
 type locationReqRes struct {
 	Count    int    `json:"count"`
-	Next     string `json:"next"`
-	Previous any    `json:"previous"`
+	Next     string `json:"next,omitempty"`
+	Previous string `json:"previous,omitempt"`
 	Results  []struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
