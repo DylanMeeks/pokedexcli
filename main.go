@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/DylanMeeks/pokedexcli/internal/pokiapi"
 	"os"
 	"strings"
 )
@@ -10,20 +11,30 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*commandConfig) error
+}
+
+type commandConfig struct {
+	Next     string
+	Previous string
 }
 
 var registry map[string]cliCommand = map[string]cliCommand{
-    "exit": {
-        name:        "exit",
-        description: "Exit the Pokedex",
-        callback:    commandExit,
-    },
-    "help": {
-        name:        "help",
-        description: "Displays a help message",
-        callback:    commandHelp,
-    },
+	"exit": {
+		name:        "exit",
+		description: "Exit the Pokedex",
+		callback:    commandExit,
+	},
+	"help": {
+		name:        "help",
+		description: "Displays a help message",
+		callback:    commandHelp,
+	},
+	"map": {
+		name:        "map",
+		description: "Displays the names of 20 location areas",
+		callback:    commandMap,
+	},
 }
 
 func main() {
@@ -36,12 +47,12 @@ func main() {
 		input := sc.Text()
 		input = strings.ToLower(input)
 		words := strings.Fields(input)
-        
-        if command, exists := registry[words[0]]; exists {
-            command.callback()
-        } else {
-            fmt.Println("Unknown command")
-        }
+
+		if command, exists := registry[words[0]]; exists {
+			command.callback(new(commandConfig))
+		} else {
+			fmt.Println("Unknown command")
+		}
 	}
 }
 
@@ -50,18 +61,22 @@ func cleanInput(text string) []string {
 	return words
 }
 
-func commandExit() error {
+func commandExit(config *commandConfig) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp() error {
-    fmt.Println(
-`Welcome to the Pokedex!
+func commandHelp(config *commandConfig) error {
+	fmt.Println(
+		`Welcome to the Pokedex!
 Usage:
 
 help: Displays a help message
 exit: Exit the Pokedex`)
-    return nil
+	return nil
+}
+
+func commandMap(config *commandConfig) error {
+    GetLocationArea
 }
