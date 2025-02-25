@@ -1,6 +1,7 @@
 package pokecache
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -39,6 +40,7 @@ func (C Cache) reapLoop(interval time.Duration) {
 }
 
 func (C Cache) Add(key string, val []byte) {
+    fmt.Printf("waiting for lock")
     C.mutex.Lock()
 	C.cache[key] = cacheEntry{
 		createdAt: time.Now(),
