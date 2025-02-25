@@ -28,32 +28,32 @@ func NewCache(interval time.Duration) Cache {
 func (C Cache) reapLoop(interval time.Duration) {
     ticker := time.NewTicker(interval)
     for range ticker.C {
-        C.mutex.Unlock()
+        C.mutex.Lock()
         for k, v := range C.cache {
             if time.Now().Sub(v.createdAt) > interval {
                 delete(C.cache, k)
             }
         }
-        C.mutex.Lock()
+        C.mutex.Unlock()
     }
 }
 
 func (C Cache) Add(key string, val []byte) {
-    C.mutex.Unlock()
+    C.mutex.Lock()
 	C.cache[key] = cacheEntry{
 		createdAt: time.Now(),
 		val:       val,
 	}
-    C.mutex.Lock()
+    C.mutex.Unlock()
 }
 
 func (C Cache) Get(key string) ([]byte, bool) {
-    C.mutex.Unlock()
+    C.mutex.Lock()
     entry, ok := C.cache[key]
     if !ok {
         return []byte{}, ok
     }
     val := entry.val
-    C.mutex.Lock()
+    C.mutex.Unlock()
     return val, ok
 }
