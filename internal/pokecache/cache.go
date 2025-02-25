@@ -39,17 +39,21 @@ func (C Cache) reapLoop(interval time.Duration) {
 }
 
 func (C Cache) Add(key string, val []byte) {
+    C.mutex.Unlock()
 	C.cache[key] = cacheEntry{
 		createdAt: time.Now(),
 		val:       val,
 	}
+    C.mutex.Lock()
 }
 
 func (C Cache) Get(key string) ([]byte, bool) {
+    C.mutex.Unlock()
     entry, ok := C.cache[key]
     if !ok {
         return []byte{}, ok
     }
     val := entry.val
+    C.mutex.Lock()
     return val, ok
 }

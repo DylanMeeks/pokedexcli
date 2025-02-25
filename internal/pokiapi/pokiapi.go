@@ -11,8 +11,8 @@ type LocationArea struct {
 	Name                 string `json:"name"`
 }
 
-type locationReqRes struct {
-	Count    int    `json:"count"`
+type LocationReqRes struct {
+	//Count    int    `json:"count"`
 	Next     string `json:"next,omitempty"`
 	Previous string `json:"previous,omitempt"`
 	Results  []struct {
@@ -22,22 +22,22 @@ type locationReqRes struct {
 }
 
 
-func GetLocations(url string) (locationReqRes, error) {
+func GetLocations(url string) (LocationReqRes, error) {
     res, err := http.Get(url)
     if err != nil {
-        return locationReqRes{}, err
+        return LocationReqRes{}, err
     }
 
     body, err := io.ReadAll(res.Body)
     if err != nil {
-        return locationReqRes{}, err
+        return LocationReqRes{}, err
     }
     defer res.Body.Close()
 
-    locData := locationReqRes{}
+    locData := LocationReqRes{}
     err = json.Unmarshal(body, &locData)
     if err != nil {
-        return locationReqRes{}, err
+        return LocationReqRes{}, err
     }
 
     return locData, nil
