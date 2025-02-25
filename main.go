@@ -2,10 +2,16 @@ package main
 
 import (
 	"bufio"
+	"encoding/gob"
+	"encoding/json"
 	"fmt"
-	"github.com/DylanMeeks/pokedexcli/internal/pokiapi"
+	"io"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/DylanMeeks/pokedexcli/internal/pokecache"
+	"github.com/DylanMeeks/pokedexcli/internal/pokiapi"
 )
 
 type cliCommand struct {
@@ -17,6 +23,7 @@ type cliCommand struct {
 type commandConfig struct {
 	Next     string
 	Previous string
+	Cache    pokecache.Cache
 }
 
 var registry map[string]cliCommand = map[string]cliCommand{
@@ -46,10 +53,11 @@ func main() {
 
 	sc := bufio.NewScanner(os.Stdin)
 
-    config := commandConfig{
-        Next: "https://pokeapi.co/api/v2/location-area/",
-        Previous: "",
-    }
+	config := commandConfig{
+		Next:     "https://pokeapi.co/api/v2/location-area/",
+		Previous: "",
+		Cache:    pokecache.NewCache(time.Second * 2),
+	}
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -59,9 +67,9 @@ func main() {
 		words := strings.Fields(input)
 
 		if command, exists := registry[words[0]]; exists {
-            if err := command.callback(&config); err != nil {
-                fmt.Println(err)
-            }
+			if err := command.callback(&config); err != nil {
+				fmt.Println(err)
+			}
 
 		} else {
 			fmt.Println("Unknown command")
@@ -91,31 +99,71 @@ exit: Exit the Pokedex`)
 }
 
 func commandMap(config *commandConfig) error {
-    locs, err := pokeapi.GetLocations(config.Next) 
+	cachedLocs, ok := config.Cache.Get(config.Next)
+    var locs pokeapi.LocationReqRes
+	// var locs []struct {
+	// 	Name string `json:"name"`
+	// 	URL  string `json:"url"`
+	// }
+	if !ok {
+		res, err := pokeapi.GetLocations(config.Next)
+		if err != nil {
+			return err
+		}
+        locs = res
+	} else {
+		err := json.Unmarshal(cachedLocs, &locs)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, loc := range locs.Results {
+		fmt.Println(loc.Name)
+	}
+
+	data, err := json.Marshal(locs)
     if err != nil {
         return err
     }
-    for _, loc := range locs.Results {
-        fmt.Println(loc.Name)
-    }
-    config.Previous = config.Next
-    config.Next = locs.Next
-    fmt.Println("next: " + config.Next)
-    fmt.Println("previous: " + config.Previous)
-    return nil
+	config.Cache.Add(config.Next, data)
+
+	config.Previous = config.Next
+	config.Next = locs.Next
+	return nil
 }
 
 func commandMapb(config *commandConfig) error {
-    locs, err := pokeapi.GetLocations(config.Previous) 
+	cachedLocs, ok := config.Cache.Get(config.Previous)
+    var locs pokeapi.LocationReqRes
+	// var locs []struct {
+	// 	Name string `json:"name"`
+	// 	URL  string `json:"url"`
+	// }
+	if !ok {
+		res, err := pokeapi.GetLocations(config.Previous)
+		if err != nil {
+			return err
+		}
+        locs = res
+	} else {
+		err := json.Unmarshal(cachedLocs, &locs)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, loc := range locs.Results {
+		fmt.Println(loc.Name)
+	}
+
+	data, err := json.Marshal(locs)
     if err != nil {
         return err
     }
-    for _, loc := range locs.Results {
-        fmt.Println(loc.Name)
-    }
-    config.Next = config.Previous
-    config.Previous = locs.Previous
-    fmt.Println("next: " + config.Next)
-    fmt.Println("previous: " + config.Previous)
-    return nil
+	config.Cache.Add(config.Previous, data)
+
+	config.Next = config.Previous
+	config.Previous = locs.Previous
+	return nil
 }
